@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Webcomic</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-top">
+    <div class="banner" role="presentation">
+      <img src="assets/banner.png" width="1600" height="900" alt="Title banner">
+    </div>
+    <nav class="site-nav" aria-label="Site">
+      <a href="index.html">Latest</a>
+      <a href="archive.html">Archive</a>
+      <a href="about.html">About</a>
+    </nav>
+  </header>
+
+  <main class="comic-main">
+    <div class="comic-column">
+      <nav class="comic-nav comic-nav--top" aria-label="Comic pagination">
+        <a id="nav-first-t" href="#"><span class="nav-arrow nav-arrow--dbl" aria-hidden="true">◀◀</span> First</a>
+        <a id="nav-prev-t" href="#"><span class="nav-arrow" aria-hidden="true">◀</span> Prev</a>
+        <a id="nav-next-t" href="#">Next <span class="nav-arrow" aria-hidden="true">▶</span></a>
+        <a id="nav-last-t" href="#">Last <span class="nav-arrow nav-arrow--end" aria-hidden="true">▶|</span></a>
+      </nav>
+      <figure class="comic-stage">
+        <img id="comic-image" src="" alt="Comic page">
+      </figure>
+      <nav class="comic-nav comic-nav--bottom" aria-label="Comic pagination">
+        <a id="nav-first-b" href="#"><span class="nav-arrow nav-arrow--dbl" aria-hidden="true">◀◀</span> First</a>
+        <a id="nav-prev-b" href="#"><span class="nav-arrow" aria-hidden="true">◀</span> Prev</a>
+        <a id="nav-next-b" href="#">Next <span class="nav-arrow" aria-hidden="true">▶</span></a>
+        <a id="nav-last-b" href="#">Last <span class="nav-arrow nav-arrow--end" aria-hidden="true">▶|</span></a>
+      </nav>
+    </div>
+    <div class="comic-meta">
+      <p class="issue-label" id="issue-label"></p>
+      <h1 id="issue-title"></h1>
+      <div class="comic-notes" id="issue-notes"></div>
+    </div>
+  </main>
+
+  <footer class="site-foot">
+    <span id="permalink"></span>
+  </footer>
+
+  <script src="issues.js"></script>
+  <script>
+(function () {
+  var issues = window.COMIC_ISSUES;
+  if (!issues || !issues.length) return;
+
+  function byNum(n) {
+    for (var i = 0; i < issues.length; i++) {
+      if (issues[i].n === n) return issues[i];
+    }
+    return null;
+  }
+
+  var firstN = issues[0].n;
+  var lastN = issues[issues.length - 1].n;
+  var params = new URLSearchParams(window.location.search);
+  var requested = parseInt(params.get("issue"), 10);
+  if (!requested || requested < 1) requested = lastN;
+
+  var issue = byNum(requested);
+  if (!issue) {
+    issue = issues[issues.length - 1];
+    requested = issue.n;
+  }
+
+  var isFirst = requested <= firstN;
+  var isLast = requested >= lastN;
+
+  function hrefFor(num) {
+    return "index.html?issue=" + num;
+  }
+
+  function wirePair(firstEl, prevEl, nextEl, lastEl) {
+    firstEl.href = hrefFor(firstN);
+    prevEl.href = hrefFor(Math.max(firstN, requested - 1));
+    nextEl.href = hrefFor(Math.min(lastN, requested + 1));
+    lastEl.href = hrefFor(lastN);
+
+    if (isFirst) {
+      firstEl.classList.add("is-disabled");
+      prevEl.classList.add("is-disabled");
+    }
+    if (isLast) {
+      nextEl.classList.add("is-disabled");
+      lastEl.classList.add("is-disabled");
+    }
+  }
+
+  wirePair(
+    document.getElementById("nav-first-t"),
+    document.getElementById("nav-prev-t"),
+    document.getElementById("nav-next-t"),
+    document.getElementById("nav-last-t")
+  );
+  wirePair(
+    document.getElementById("nav-first-b"),
+    document.getElementById("nav-prev-b"),
+    document.getElementById("nav-next-b"),
+    document.getElementById("nav-last-b")
+  );
+
+  document.getElementById("comic-image").src = issue.image;
+  document.getElementById("comic-image").alt = issue.title || ("Issue " + issue.n);
+  document.getElementById("issue-label").textContent = "Issue " + issue.n;
+  document.getElementById("issue-title").textContent = issue.title || "";
+
+  var notes = document.getElementById("issue-notes");
+  if (issue.html && issue.html.trim()) {
+    notes.innerHTML = issue.html;
+  }
+
+  document.title = (issue.title ? issue.title + " — " : "") + "Webcomic";
+
+  var base = window.location.pathname.split("/").pop() || "index.html";
+  var link = base + "?issue=" + requested;
+  document.getElementById("permalink").innerHTML =
+    'Permalink: <a href="' + link + '">' + link + "</a>";
+})();
+  </script>
+</body>
+</html>
